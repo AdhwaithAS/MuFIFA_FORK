@@ -5,8 +5,19 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-.pnpm-debug.log*
-.agents
+# Hidden / Dot folders for IDEs and AI tools
+.agents/
+.codex/
+.impeccable/
+.claude/
+.gemini/
+.cursor/
+.vscode/
+.idea/
+.kiro/
+.github/hooks/
+.github/skills/
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .wrangler

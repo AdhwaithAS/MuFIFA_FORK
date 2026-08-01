@@ -201,12 +201,22 @@ function PreviewIcon() {
   );
 }
 
+function AscendIcon() {
+  return (
+    <svg className="h-4 w-4 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 9.75l7.5-7.5 7.5 7.5" />
+    </svg>
+  );
+}
+
 function Sidebar({ admin, collapsed, setCollapsed }) {
   const pathname = usePathname();
 
   const links = [
     { name: "Dashboard", href: "/admin", icon: <DashboardIcon /> },
     { name: "Users", href: "/admin/users", icon: <UsersIcon /> },
+    { name: "Ascend Arena", href: "/admin/ascend", icon: <AscendIcon /> },
     { name: "Predictions", href: "/admin/predictions", icon: <PredictionsIcon /> },
     { name: "Tasks", href: "/admin/tasks", icon: <TasksIcon /> },
     { name: "Create Task", href: "/admin/tasks/create", icon: <CreateTaskIcon /> },
