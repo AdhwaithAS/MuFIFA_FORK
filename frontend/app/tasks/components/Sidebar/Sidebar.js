@@ -157,20 +157,50 @@ export default function Sidebar({ player, handleLogout }) {
         </svg>
       ),
     },
+    {
+      name: "Kuzhiundo",
+      href: "/kuzhiundo",
+      icon: (
+        <svg
+          className="w-5 h-5 text-amber-400"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+          />
+        </svg>
+      ),
+    },
   ];
 
   if (player) {
     menuItems.push({
-      name: "Kuzhiundo",
-      href: "/kuzhiundo",
+      name: "Ascend",
+      href: "/ascend",
       icon: (
-        <Image
-          src="/challenges/kuzhiundo/kuzhiundo_logo.webp"
-          alt="Kuzhiundo"
-          width={20}
-          height={20}
-          className="rounded-full p-1 bg-white/90 "
-        />
+        <svg
+          className="w-5 h-5 text-violet-400"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 15.75l7.5-7.5 7.5 7.5"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 9.75l7.5-7.5 7.5 7.5"
+          />
+        </svg>
       ),
     });
   }

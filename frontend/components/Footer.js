@@ -134,10 +134,8 @@ export default function Footer() {
                 {[
                   { name: "Home", href: "/" },
                   { name: "Register", href: "/register" },
-                  { name: "LeaderBoard", href: "/leaderboard" },
-                  // { name: "Products", href: "#" },
-                  // { name: "Events", href: "#" },
-                  // { name: "Sevapalley", href: "#" },
+                  { name: "Leaderboard", href: "/leaderboard" },
+                  { name: "Ascend Arena ⚡", href: "/ascend" },
                 ].map((link) => (
                   <li key={link.name}>
                     <Link

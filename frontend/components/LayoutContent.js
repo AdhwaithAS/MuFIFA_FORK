@@ -31,6 +31,7 @@ export default function LayoutContent({ children }) {
     pathname.startsWith("/profile") ||
     pathname.startsWith("/points-history") ||
     pathname.startsWith("/kuzhiundo") ||
+    pathname.startsWith("/ascend") ||
     pathname.startsWith("/captain");
 
   // Avoid rendering standard headers/footers for administration and sandbox development routes.
@@ -73,6 +74,7 @@ function LayoutInner({
     !player &&
     (pathname.startsWith("/leaderboard") ||
       pathname.startsWith("/match") ||
+      pathname.startsWith("/ascend") ||
       pathname.startsWith("/profile"));
 
   if (isArenaRoute && !shouldRenderPublic) {
@@ -202,6 +204,31 @@ function ArenaLayout({
       ),
     },
     {
+      name: "Ascend",
+      href: "/ascend",
+      isCenter: true,
+      icon: (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 15.75l7.5-7.5 7.5 7.5"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 9.75l7.5-7.5 7.5 7.5"
+          />
+        </svg>
+      ),
+    },
+    {
       name: "μPredict",
       href: "/match",
       icon: (
@@ -236,23 +263,9 @@ function ArenaLayout({
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
           />
         </svg>
-      ),
-    },
-
-    {
-      name: "Kuzhiundo",
-      href: "/kuzhiundo",
-      icon: (
-        <Image
-          src="/challenges/kuzhiundo/kuzhiundo_logo.webp"
-          alt="Kuzhiundo"
-          width={22}
-          height={22}
-          className="object-contain"
-        />
       ),
     },
   ];
@@ -359,6 +372,27 @@ function ArenaLayout({
             item.name === "Profile"
               ? pathname.startsWith("/profile")
               : pathname === item.href;
+
+          if (item.isCenter) {
+            return (
+              <Link
+                key={item.name}
+                id={`mobile-tab-item-${item.name.toLowerCase()}`}
+                href={item.href}
+                className="flex-1 min-w-0 flex flex-col items-center justify-center -mt-5 transition-all group"
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl ${
+                    isActive
+                      ? "bg-gradient-to-tr from-violet-600 to-cyan-500 text-white shadow-violet-500/50 scale-110 ring-2 ring-violet-400"
+                      : "bg-gradient-to-tr from-violet-600/90 to-indigo-600/90 text-white hover:scale-105 shadow-indigo-500/30 border border-white/20"
+                  }`}
+                >
+                  {item.icon}
+                </div>
+              </Link>
+            );
+          }
 
           return (
             <Link
