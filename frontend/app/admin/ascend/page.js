@@ -13,7 +13,14 @@ const DOMAIN_STYLES = {
 };
 
 export default function AdminAscendPage() {
-  const [activeTab, setActiveTab] = useState("submissions"); // "submissions" or "create_task" or "tasks_list"
+  const [activeTab, setActiveTab] = useState("registered_users"); // "registered_users" or "submissions" or "create_task" or "tasks_list"
+
+  // Registered Users state
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [registeredUsersLoading, setRegisteredUsersLoading] = useState(true);
+  const [ascendStats, setAscendStats] = useState(null);
+  const [regSearchQuery, setRegSearchQuery] = useState("");
+  const [regFilterDomain, setRegFilterDomain] = useState("All");
 
   // Tasks state
   const [tasks, setTasks] = useState([]);
@@ -47,6 +54,22 @@ export default function AdminAscendPage() {
   const [filterDomain, setFilterDomain] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
+  const fetchRegistrations = async () => {
+    try {
+      setRegisteredUsersLoading(true);
+      const res = await fetch("/api/v1/admin/ascend/registrations");
+      const data = await res.json();
+      if (data.success) {
+        setRegisteredUsers(data.registrations || []);
+        setAscendStats(data.stats || null);
+      }
+    } catch (err) {
+      console.error("Failed to load ascend registrations:", err);
+    } finally {
+      setRegisteredUsersLoading(false);
+    }
+  };
+
   const fetchTasks = async () => {
     try {
       setTasksLoading(true);
@@ -78,6 +101,7 @@ export default function AdminAscendPage() {
   };
 
   useEffect(() => {
+    fetchRegistrations();
     fetchTasks();
     fetchSubmissions();
   }, []);
@@ -171,6 +195,26 @@ export default function AdminAscendPage() {
     return true;
   });
 
+  const filteredRegistrations = registeredUsers.filter((reg) => {
+    if (regFilterDomain !== "All" && reg.primary_domain !== regFilterDomain) return false;
+    if (regSearchQuery.trim()) {
+      const query = regSearchQuery.toLowerCase();
+      const name = (reg.registrations?.name || "").toLowerCase();
+      const userId = (reg.user_id || "").toLowerCase();
+      const email = (reg.registrations?.email || "").toLowerCase();
+      const skills = (reg.skills || "").toLowerCase();
+      if (
+        !name.includes(query) &&
+        !userId.includes(query) &&
+        !email.includes(query) &&
+        !skills.includes(query)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -179,15 +223,25 @@ export default function AdminAscendPage() {
             Ascend Competition Hub
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Manage company bounties, evaluate student submissions, and award 10-star quality & innovativeness scores.
+            Manage company bounties, registered participants, and evaluate student submissions.
           </p>
         </div>
 
         {/* Tab Selector */}
-        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("registered_users")}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "registered_users"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Registered Users ({registeredUsers.length})
+          </button>
           <button
             onClick={() => setActiveTab("submissions")}
-            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "submissions"
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
@@ -197,7 +251,7 @@ export default function AdminAscendPage() {
           </button>
           <button
             onClick={() => setActiveTab("tasks_list")}
-            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "tasks_list"
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
@@ -207,9 +261,9 @@ export default function AdminAscendPage() {
           </button>
           <button
             onClick={() => setActiveTab("create_task")}
-            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "create_task"
-                ? "bg-violet-600 text-white shadow-sm"
+                ? "bg-slate-900 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -217,6 +271,203 @@ export default function AdminAscendPage() {
           </button>
         </div>
       </div>
+
+      {/* Minimal Ascend Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className={`${THEME.panel} rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden`}>
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Total Registered</span>
+            <svg className="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div className="mt-2 text-2xl font-extrabold text-slate-900">
+            {ascendStats?.totalRegistered ?? registeredUsers.length}
+          </div>
+        </div>
+
+        <div className={`${THEME.panel} rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden`}>
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Registered Today</span>
+            <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="mt-2 text-2xl font-extrabold text-emerald-600">
+            {ascendStats?.todayCount ?? 0}
+          </div>
+        </div>
+
+        <div className={`${THEME.panel} rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden`}>
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Submissions</span>
+            <svg className="w-4 h-4 text-sky-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </div>
+          <div className="mt-2 text-2xl font-extrabold text-sky-600">
+            {ascendStats?.totalSubmissions ?? submissions.length}
+          </div>
+        </div>
+      </div>
+
+      {/* TAB: REGISTERED USERS */}
+      {activeTab === "registered_users" && (
+        <div className={`${THEME.panel} rounded-2xl overflow-hidden p-6`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+              Ascend Registered Participants
+            </h2>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Search */}
+              <input
+                type="text"
+                placeholder="Search name, ID, email, skills..."
+                value={regSearchQuery}
+                onChange={(e) => setRegSearchQuery(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-violet-500 w-48 sm:w-60"
+              />
+
+              {/* Domain Filter */}
+              <div className="flex items-center gap-1 text-xs">
+                <span className="text-slate-500 font-semibold">Domain:</span>
+                <select
+                  value={regFilterDomain}
+                  onChange={(e) => setRegFilterDomain(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none"
+                >
+                  <option value="All">All Domains</option>
+                  {DOMAINS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {registeredUsersLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-2">
+              <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-slate-400 font-semibold">Loading Registered Users...</span>
+            </div>
+          ) : filteredRegistrations.length === 0 ? (
+            <div className="py-12 text-center text-xs text-slate-400">
+              No registered participants found matching the criteria.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Participant</th>
+                    <th className="py-3 px-4">Primary Domain</th>
+                    <th className="py-3 px-4">Portfolio & Socials</th>
+                    <th className="py-3 px-4">Skills</th>
+                    <th className="py-3 px-4 text-right">Registered On</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRegistrations.map((reg) => {
+                    const studentName = reg.registrations?.name || reg.user_id;
+                    const email = reg.registrations?.email || "";
+                    const phone = reg.registrations?.phone || "";
+                    const avatar = reg.registrations?.avatar_url || "";
+                    const domainStyle = DOMAIN_STYLES[reg.primary_domain] || "bg-slate-100 text-slate-700";
+
+                    return (
+                      <tr key={reg.id || reg.user_id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center shrink-0 border border-violet-200 overflow-hidden text-xs">
+                              {avatar ? (
+                                <img src={avatar} alt={studentName} className="w-full h-full object-cover" />
+                              ) : (
+                                studentName.slice(0, 2).toUpperCase()
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-800">{studentName}</div>
+                              <div className="text-[10px] text-slate-400 font-normal">
+                                @{reg.user_id} {email && `• ${email}`} {phone && `• ${phone}`}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2.5 py-1 rounded-full border text-[10px] font-bold ${domainStyle}`}>
+                            {reg.primary_domain || "N/A"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {reg.portfolio_url && (
+                              <a
+                                href={reg.portfolio_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-600 font-semibold hover:underline text-[11px] inline-flex items-center gap-1"
+                              >
+                                <svg className="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
+                                Portfolio ↗
+                              </a>
+                            )}
+                            {reg.github_url && (
+                              <a
+                                href={reg.github_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-slate-800 font-semibold hover:underline text-[11px] inline-flex items-center gap-1"
+                              >
+                                <svg className="w-3 h-3 text-slate-700" fill="currentColor" viewBox="0 0 24 24">
+                                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                                </svg>
+                                GitHub ↗
+                              </a>
+                            )}
+                            {reg.linkedin_url && (
+                              <a
+                                href={reg.linkedin_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sky-600 font-semibold hover:underline text-[11px] inline-flex items-center gap-1"
+                              >
+                                <svg className="w-3 h-3 text-sky-600" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.47 1.47 0 1 0 0 2.94 1.47 1.47 0 0 0 0-2.94z" />
+                                </svg>
+                                LinkedIn ↗
+                              </a>
+                            )}
+                            {!reg.portfolio_url && !reg.github_url && !reg.linkedin_url && (
+                              <span className="text-slate-400 italic text-[11px]">No links</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 max-w-xs">
+                          {reg.skills ? (
+                            <span className="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg line-clamp-2">
+                              {reg.skills}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic text-[11px]">None listed</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right text-[11px] text-slate-500 font-mono">
+                          {reg.registered_at ? new Date(reg.registered_at).toLocaleDateString() : "N/A"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: SUBMISSIONS & GRADING */}
       {activeTab === "submissions" && (
@@ -296,7 +547,7 @@ export default function AdminAscendPage() {
                           <span className="text-[10px] text-slate-400 font-normal">{sub.user_id}</span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-bold text-violet-700">{company}</div>
+                          <div className="font-bold text-indigo-700">{company}</div>
                           <div className="text-slate-600 truncate max-w-xs">{taskTitle}</div>
                         </td>
                         <td className="py-3 px-4">
@@ -318,8 +569,11 @@ export default function AdminAscendPage() {
                             View Submission ↗
                           </a>
                           {sub.notes && (
-                            <div className="mt-1 text-[11px] text-slate-600 bg-slate-100 p-1.5 rounded-lg max-w-xs line-clamp-2 font-normal">
-                              📝 {sub.notes}
+                            <div className="mt-1 text-[11px] text-slate-600 bg-slate-100 p-1.5 rounded-lg max-w-xs line-clamp-2 font-normal flex items-start gap-1">
+                              <svg className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span>{sub.notes}</span>
                             </div>
                           )}
                         </td>
@@ -327,7 +581,7 @@ export default function AdminAscendPage() {
                           {sub.status === "Pending" ? (
                             <span className="text-slate-400 italic">Unrated</span>
                           ) : (
-                            <div className="inline-flex items-center gap-1 font-black text-amber-500 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                            <div className="inline-flex items-center gap-1 font-black text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full text-[11px]">
                               <span>★ {sub.total_rating || 0}/10</span>
                             </div>
                           )}
@@ -348,7 +602,7 @@ export default function AdminAscendPage() {
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => handleOpenGradeModal(sub)}
-                            className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
                           >
                             Grade & Mark
                           </button>
@@ -410,8 +664,11 @@ export default function AdminAscendPage() {
                     <h3 className="font-extrabold text-slate-900 text-base">{t.title}</h3>
                     <p className="text-xs text-slate-600 mt-2 line-clamp-2">{t.description}</p>
                     {t.perks && (
-                      <div className="mt-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded-lg font-semibold">
-                        🎁 Perks: {t.perks}
+                      <div className="mt-3 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2 rounded-lg font-semibold flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 13C10.832 21 9 20.1 9 19c0-1.1 1.832-2 3-2s3 .9 3 2c0 1.1-1.832 2-3 2z" />
+                        </svg>
+                        <span>Perks: {t.perks}</span>
                       </div>
                     )}
                   </div>
@@ -548,7 +805,7 @@ export default function AdminAscendPage() {
             <button
               type="submit"
               disabled={formSubmitting}
-              className="mt-2 w-full py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
+              className="mt-2 w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
             >
               {formSubmitting ? "Publishing Task..." : "Publish Ascend Task"}
             </button>
@@ -558,7 +815,7 @@ export default function AdminAscendPage() {
 
       {/* GRADING MODAL */}
       {selectedSubmission && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl relative animate-fadeIn">
             <h3 className="text-base font-extrabold text-slate-900">
               Grade & Mark Student Submission
@@ -571,22 +828,25 @@ export default function AdminAscendPage() {
               <div className="font-bold text-slate-800">
                 {selectedSubmission.registrations?.name || selectedSubmission.user_id}
               </div>
-              <div className="text-violet-600 font-semibold">
+              <div className="text-indigo-600 font-semibold">
                 {selectedSubmission.ascend_tasks?.company_name} — {selectedSubmission.ascend_tasks?.title}
               </div>
               <a
                 href={selectedSubmission.submission_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-600 underline text-[11px] font-semibold truncate block"
+                className="text-sky-600 hover:text-sky-700 underline text-[11px] font-semibold truncate block transition-colors"
               >
                 {selectedSubmission.submission_url} ↗
               </a>
 
               {selectedSubmission.notes && (
                 <div className="mt-1 p-2.5 bg-white rounded-lg border border-slate-200 text-xs text-slate-700">
-                  <span className="font-bold text-slate-900 block mb-0.5">
-                    📝 Student Notes & Documentation:
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5 mb-0.5">
+                    <svg className="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Student Notes & Documentation:
                   </span>
                   <p className="whitespace-pre-wrap leading-relaxed text-[11px] text-slate-700 font-normal">
                     {selectedSubmission.notes}
@@ -599,7 +859,7 @@ export default function AdminAscendPage() {
               {/* Quality Rating (1 to 5 Stars) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  1. Quality Score (1 - 5 Stars): <span className="text-violet-600 font-black">{qualityScore} Stars</span>
+                  1. Quality Score (1 - 5 Stars): <span className="text-amber-600 font-black">{qualityScore} Stars</span>
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -607,10 +867,10 @@ export default function AdminAscendPage() {
                       key={star}
                       type="button"
                       onClick={() => setQualityScore(star)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-black border transition-all ${
+                      className={`flex-1 py-2 rounded-lg text-sm font-black border transition-all cursor-pointer ${
                         qualityScore >= star
-                          ? "bg-amber-400 text-slate-900 border-amber-500 shadow-sm"
-                          : "bg-slate-100 text-slate-400 border-slate-200"
+                          ? "bg-amber-400 text-amber-950 border-amber-500 shadow-sm"
+                          : "bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200"
                       }`}
                     >
                       ★ {star}
@@ -622,7 +882,7 @@ export default function AdminAscendPage() {
               {/* Innovativeness Rating (1 to 5 Stars) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  2. Innovativeness Score (1 - 5 Stars): <span className="text-violet-600 font-black">{innovationScore} Stars</span>
+                  2. Innovativeness Score (1 - 5 Stars): <span className="text-indigo-600 font-black">{innovationScore} Stars</span>
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -630,10 +890,10 @@ export default function AdminAscendPage() {
                       key={star}
                       type="button"
                       onClick={() => setInnovationScore(star)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-black border transition-all ${
+                      className={`flex-1 py-2 rounded-lg text-sm font-black border transition-all cursor-pointer ${
                         innovationScore >= star
-                          ? "bg-cyan-400 text-slate-900 border-cyan-500 shadow-sm"
-                          : "bg-slate-100 text-slate-400 border-slate-200"
+                          ? "bg-indigo-600 text-white border-indigo-700 shadow-sm"
+                          : "bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200"
                       }`}
                     >
                       ★ {star}
@@ -643,9 +903,9 @@ export default function AdminAscendPage() {
               </div>
 
               {/* Total Rating Banner */}
-              <div className="p-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl flex items-center justify-between shadow-md">
-                <span className="text-xs font-bold uppercase tracking-wider">Total Rating</span>
-                <span className="text-xl font-black text-amber-300">
+              <div className="p-3.5 bg-slate-900 text-white rounded-xl flex items-center justify-between shadow-md border border-slate-800">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Total Rating</span>
+                <span className="text-xl font-black text-amber-400">
                   ★ {qualityScore + innovationScore} / 10 Stars
                 </span>
               </div>
@@ -656,10 +916,10 @@ export default function AdminAscendPage() {
                 <select
                   value={gradingStatus}
                   onChange={(e) => setGradingStatus(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 cursor-pointer"
                 >
                   <option value="Graded">Graded</option>
-                  <option value="Shortlisted">★ Shortlisted for Internship Interview</option>
+                  <option value="Shortlisted">Shortlisted for Internship Interview</option>
                   <option value="Pending">Pending</option>
                 </select>
               </div>
@@ -672,7 +932,7 @@ export default function AdminAscendPage() {
                   placeholder="Notes for student or internal hiring team..."
                   value={adminFeedback}
                   onChange={(e) => setAdminFeedback(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
                 />
               </div>
             </div>
@@ -681,7 +941,7 @@ export default function AdminAscendPage() {
               <button
                 type="button"
                 onClick={() => setSelectedSubmission(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -689,7 +949,7 @@ export default function AdminAscendPage() {
                 type="button"
                 onClick={handleSubmitGrade}
                 disabled={gradeSubmitting}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
               >
                 {gradeSubmitting ? "Saving..." : "Save Grade & Mark"}
               </button>

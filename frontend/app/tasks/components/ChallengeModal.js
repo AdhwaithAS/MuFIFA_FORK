@@ -516,7 +516,7 @@ export default function ChallengeModal({
               <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#121021] border border-violet-500/30 flex items-center justify-center shadow-2xl relative z-10">
                 <div className="relative w-10 h-10 md:w-14 md:h-14">
                   <Image
-                    src={getTaskLogo(task.id)}
+                    src={task.logo_url || getTaskLogo(task.id)}
                     alt="Logo Badge"
                     fill
                     className="object-contain drop-shadow-[0_0_15px_rgba(139,92,246,0.6)]"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { compressImage } from "@/utils/imageCompression";
 import { TEAM_FLAGS, TEAM_FLAG_BGS, calculateLevel } from "@/utils/constants";
 
 export function useProfileState(id, currentUser, refreshPlayer) {
@@ -315,8 +316,11 @@ export function useProfileState(id, currentUser, refreshPlayer) {
     setUploadError("");
 
     try {
+      // Compress avatar image before uploading to optimize performance and save storage
+      const optimizedFile = await compressImage(file, 600, 600, 0.82);
+
       const formData = new FormData();
-      formData.append("avatar", file);
+      formData.append("avatar", optimizedFile);
 
       const res = await fetch("/api/v1/profile/avatar", {
         method: "POST",
@@ -333,6 +337,8 @@ export function useProfileState(id, currentUser, refreshPlayer) {
       if (isOwner && refreshPlayer) {
         refreshPlayer();
       }
+      // Reload the page after successful upload
+      window.location.reload();
     } catch (err) {
       console.error("Avatar upload error:", err);
       setUploadError("A connection error occurred. Please try again.");
