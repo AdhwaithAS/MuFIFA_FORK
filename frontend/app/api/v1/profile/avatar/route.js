@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/utils/auth";
 import { createRateLimiter, getClientIp } from "@/utils/rateLimit";
+import sharp from "sharp";
 
 const PLAYER_COOKIE = "player_token";
 const checkRate = createRateLimiter("avatar-upload", 10, 5 * 60 * 1000);
@@ -96,12 +97,31 @@ export async function POST(request) {
       avatarBucketReady = true;
     }
 
-    // 6. Convert file to binary buffer
+    // 6. Convert file to binary buffer and compress with Sharp
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const inputBuffer = Buffer.from(arrayBuffer);
+
+    let processedBuffer = inputBuffer;
+    let contentType = file.type || "image/png";
+    let extension = "png";
+
+    if (file.type !== "image/svg+xml") {
+      try {
+        processedBuffer = await sharp(inputBuffer)
+          .resize(512, 512, { fit: "cover", withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+        contentType = "image/webp";
+        extension = "webp";
+      } catch (sharpErr) {
+        console.warn("Sharp image compression fallback:", sharpErr);
+      }
+    } else {
+      extension = "svg";
+      contentType = "image/svg+xml";
+    }
 
     // Generate stable name per user (overwrites previous avatar)
-    const extension = file.name.split(".").pop() || "png";
     const filePath = `avatars/${decoded.id}.${extension}`;
 
     // 7. Upload file to Supabase Storage
@@ -111,10 +131,10 @@ export async function POST(request) {
       headers: {
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
-        "Content-Type": file.type,
+        "Content-Type": contentType,
         "x-upsert": "true",
       },
-      body: buffer,
+      body: processedBuffer,
     });
 
     if (!storageRes.ok) {

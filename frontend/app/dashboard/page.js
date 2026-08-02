@@ -735,18 +735,20 @@ export default function Dashboard() {
                 }
 
                 return (
-                  <Link key={task.id} href="/tasks" className="block cursor-pointer">
-                    <div className={`bg-gradient-to-b from-[#131927]/90 to-[#0d101d]/90 border rounded-2xl p-5 backdrop-blur-md shadow-2xl flex items-center gap-4 transition-all ${
+                  <Link key={task.id} href="/tasks" className="block cursor-pointer group">
+                    <div className={`bg-gradient-to-b from-[#131927]/90 to-[#0d101d]/90 border rounded-2xl p-5 backdrop-blur-md shadow-2xl flex items-center gap-4 transition-all duration-300 group-hover:-translate-y-1 ${
                       isCompleted 
-                        ? "border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.06)]" 
-                        : "border-white/10 hover:border-white/15"
+                        ? "border-emerald-500/30 group-hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.06)] group-hover:shadow-[0_8px_25px_rgba(16,185,129,0.15)]" 
+                        : "border-violet-500/20 group-hover:border-violet-500/40 group-hover:shadow-[0_8px_25px_rgba(139,92,246,0.15)]"
                     }`}>
-                      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-md ${
+                      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-md overflow-hidden ${
                         isCompleted 
                           ? "bg-emerald-500/10 border-emerald-500/35 text-emerald-400" 
-                          : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                          : "bg-violet-500/10 border-violet-500/30 text-violet-400"
                       }`}>
-                        {isCompleted ? (
+                        {task.logo_url ? (
+                          <img src={task.logo_url} alt="" className="w-full h-full object-cover" />
+                        ) : isCompleted ? (
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                           </svg>
@@ -757,7 +759,7 @@ export default function Dashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className={`text-[9px] font-black uppercase tracking-wider ${isCompleted ? "text-emerald-400" : "text-amber-500"}`}>
+                        <span className={`text-[9px] font-black uppercase tracking-wider ${isCompleted ? "text-emerald-400" : "text-violet-400"}`}>
                           {isCompleted ? "Completed:" : "Available Challenge:"}
                         </span>
                         <h3 className="text-sm font-extrabold text-white truncate">
@@ -770,7 +772,7 @@ export default function Dashboard() {
                             className={`h-full rounded-full transition-all duration-500 ${
                               isCompleted 
                                 ? "bg-emerald-500" 
-                                : "bg-gradient-to-r from-cyan-400 to-indigo-600"
+                                : "bg-gradient-to-r from-violet-500 to-indigo-500"
                             }`} 
                             style={{ width: `${progressPercent}%` }}
                           />
