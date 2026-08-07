@@ -132,3 +132,64 @@ export async function POST(request) {
     );
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const auth = requireRole(request, "superadmin", "admin", "iglead");
+    if (auth.error) {
+      return NextResponse.json(
+        { success: false, error: auth.message },
+        { status: auth.status }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Task ID is required for deletion." },
+        { status: 400 }
+      );
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { success: false, error: "Database not configured" },
+        { status: 503 }
+      );
+    }
+
+    const headers = {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    };
+
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/ascend_tasks?id=eq.${id}`,
+      { method: "DELETE", headers }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Delete ascend_tasks error:", errText);
+      return NextResponse.json(
+        { success: false, error: "Failed to delete task." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Company task deleted successfully!",
+    });
+  } catch (error) {
+    console.error("Admin DELETE ascend/tasks error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

@@ -25,6 +25,8 @@ export default function AdminAscendPage() {
   // Tasks state
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(true);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [deletingTask, setDeletingTask] = useState(false);
 
   // Submissions state
   const [submissions, setSubmissions] = useState([]);
@@ -38,7 +40,7 @@ export default function AdminAscendPage() {
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [perks, setPerks] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState("2026-08-18");
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formMsg, setFormMsg] = useState({ type: "", text: "" });
 
@@ -136,7 +138,7 @@ export default function AdminAscendPage() {
         setDescription("");
         setRequirements("");
         setPerks("");
-        setDeadline("");
+        setDeadline("2026-08-18");
         fetchTasks();
       } else {
         setFormMsg({ type: "error", text: data.error || "Failed to create task" });
@@ -185,6 +187,49 @@ export default function AdminAscendPage() {
       alert("Error submitting grade");
     } finally {
       setGradeSubmitting(false);
+    }
+  };
+
+  const handleDeleteSubmission = async (subId) => {
+    if (!confirm("Are you sure you want to delete this student submission?")) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/admin/ascend/submissions?id=${subId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchSubmissions();
+      } else {
+        alert(data.error || "Failed to delete submission");
+      }
+    } catch (err) {
+      console.error("Failed to delete submission:", err);
+      alert("Error deleting submission");
+    }
+  };
+
+  const handleConfirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    setDeletingTask(true);
+
+    try {
+      const res = await fetch(`/api/v1/admin/ascend/tasks?id=${taskToDelete.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTaskToDelete(null);
+        fetchTasks();
+      } else {
+        alert(data.error || "Failed to delete task.");
+      }
+    } catch (err) {
+      console.error("Delete task error:", err);
+      alert("Error deleting task.");
+    } finally {
+      setDeletingTask(false);
     }
   };
 
@@ -600,12 +645,23 @@ export default function AdminAscendPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => handleOpenGradeModal(sub)}
-                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
-                          >
-                            Grade & Mark
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenGradeModal(sub)}
+                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              Grade & Mark
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSubmission(sub.id)}
+                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              title="Delete Submission"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -639,7 +695,7 @@ export default function AdminAscendPage() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-slate-200 border border-slate-300 p-0.5 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
                           {t.company_logo ? (
                             <img
                               src={t.company_logo}
@@ -657,9 +713,21 @@ export default function AdminAscendPage() {
                         </div>
                         <span className="font-bold text-violet-800 text-sm">{t.company_name}</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${DOMAIN_STYLES[t.domain] || ""}`}>
-                        {t.domain}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${DOMAIN_STYLES[t.domain] || ""}`}>
+                          {t.domain}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setTaskToDelete(t)}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all cursor-pointer"
+                          title="Delete Task"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     <h3 className="font-extrabold text-slate-900 text-base">{t.title}</h3>
                     <p className="text-xs text-slate-600 mt-2 line-clamp-2">{t.description}</p>
@@ -952,6 +1020,42 @@ export default function AdminAscendPage() {
                 className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
               >
                 {gradeSubmitting ? "Saving..." : "Save Grade & Mark"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* DELETE TASK CONFIRMATION MODAL */}
+      {taskToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-md w-full shadow-2xl relative animate-fadeIn">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-900">
+              Delete Company Task?
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Are you sure you want to delete <strong className="text-slate-800">{taskToDelete.company_name} — {taskToDelete.title}</strong>? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setTaskToDelete(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteTask}
+                disabled={deletingTask}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
+              >
+                {deletingTask ? "Deleting..." : "Delete Task"}
               </button>
             </div>
           </div>

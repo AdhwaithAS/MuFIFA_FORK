@@ -1,39 +1,40 @@
-import React, { useState, useRef, useEffect } from "react";
-import { DOMAINS } from "../constants";
+import React, { useState } from "react";
+import { DOMAINS } from "@/utils/constants";
 
-export default function RegistrationModal({ onClose, onSuccess }) {
-  const [primaryDomain, setPrimaryDomain] = useState("Coder");
-  const [domainOpen, setDomainOpen] = useState(false);
-  const [portfolioUrl, setPortfolioUrl] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [skills, setSkills] = useState("");
+export default function RegistrationModal({ existingRegistration, onClose, onSuccess }) {
+  const isEditing = Boolean(existingRegistration);
+
+  const [primaryDomain, setPrimaryDomain] = useState(
+    existingRegistration?.primary_domain || "Coder"
+  );
+  const [seekingInternship, setSeekingInternship] = useState(
+    existingRegistration?.seeking_internship ?? true
+  );
+  const [portfolioUrl, setPortfolioUrl] = useState(
+    existingRegistration?.portfolio_url || ""
+  );
+  const [githubUrl, setGithubUrl] = useState(existingRegistration?.github_url || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(
+    existingRegistration?.linkedin_url || ""
+  );
+  const [skills, setSkills] = useState(existingRegistration?.skills || "");
   const [regSubmitting, setRegSubmitting] = useState(false);
   const [regError, setRegError] = useState("");
-
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDomainOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setRegSubmitting(true);
     setRegError("");
 
+    const method = isEditing ? "PUT" : "POST";
+
     try {
       const res = await fetch("/api/v1/ascend/register", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           primary_domain: primaryDomain,
+          seeking_internship: seekingInternship,
           portfolio_url: portfolioUrl,
           github_url: githubUrl,
           linkedin_url: linkedinUrl,
@@ -45,20 +46,32 @@ export default function RegistrationModal({ onClose, onSuccess }) {
       if (data.success) {
         onSuccess(data.registration);
       } else {
-        setRegError(data.error || "Registration failed.");
+        setRegError(data.error || "Failed to save profile.");
       }
     } catch (err) {
-      setRegError("Network error during registration.");
+      setRegError("Network error during profile update.");
     } finally {
       setRegSubmitting(false);
     }
   };
 
-  const selectedDomainObj = DOMAINS.find((d) => d.id === primaryDomain) || DOMAINS[0];
+  const domainStyles = {
+    Coder: "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:border-cyan-400",
+    Creative: "bg-pink-500/10 border-pink-500/30 text-pink-300 hover:border-pink-400",
+    Maker: "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 hover:border-indigo-400",
+    Strategist: "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:border-amber-400",
+  };
+
+  const selectedDomainStyles = {
+    Coder: "bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.3)]",
+    Creative: "bg-pink-500/25 border-pink-400 text-pink-200 shadow-[0_0_20px_rgba(236,72,153,0.3)]",
+    Maker: "bg-indigo-500/25 border-indigo-400 text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.3)]",
+    Strategist: "bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)]",
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 overflow-y-auto selection:bg-white selection:text-black">
-      <div className="bg-[#08080c] rounded-3xl border border-white/20 p-6 sm:p-8 max-w-lg w-full shadow-[0_0_80px_rgba(255,255,255,0.15)] relative animate-fadeIn my-auto max-h-[85vh] overflow-y-auto">
+      <div className="bg-[#090815] rounded-3xl border border-white/20 p-6 sm:p-8 max-w-lg w-full shadow-[0_0_80px_rgba(124,58,237,0.2)] relative animate-fadeIn my-auto max-h-[88vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -73,92 +86,28 @@ export default function RegistrationModal({ onClose, onSuccess }) {
 
         {/* Modal Header */}
         <div className="flex flex-col items-center text-center gap-1.5 mb-6">
-          <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-1">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          <div className="w-12 h-12 rounded-2xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-300 mb-1">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-            Ascend Candidate Profile
+            {isEditing ? "Edit Candidate Profile" : "Ascend Candidate Registration"}
           </h2>
-          <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-            Register your engineering profile to access live bounties & recruitment passes.
+          <p className="text-xs text-slate-400 max-w-xs leading-relaxed font-normal">
+            {isEditing
+              ? "Update your portfolio links and technical skills."
+              : "Register your engineering profile to access live bounties & recruitment passes."}
           </p>
         </div>
 
         {regError && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold mb-4 text-center">
+          <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold mb-4 text-center">
             {regError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Custom Pop-Down Primary Domain Field */}
-          <div className="relative" ref={dropdownRef}>
-            <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
-              Primary Domain *
-            </label>
-            <button
-              type="button"
-              onClick={() => setDomainOpen((prev) => !prev)}
-              className="w-full bg-black/80 border border-white/20 hover:border-white/40 rounded-xl px-4 py-3 text-xs text-white flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-white/40 transition-all cursor-pointer shadow-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <span className="font-extrabold text-white">{selectedDomainObj.title}</span>
-                <span className="text-[10px] font-mono text-slate-300 bg-white/10 px-2 py-0.5 rounded-md border border-white/15">
-                  {selectedDomainObj.id}
-                </span>
-              </div>
-              <svg
-                className={`w-4 h-4 text-slate-300 transition-transform duration-200 ${
-                  domainOpen ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {domainOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#0c0d12] border border-white/25 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.95)] overflow-hidden p-1.5 animate-fadeIn">
-                {DOMAINS.map((d) => {
-                  const isSelected = primaryDomain === d.id;
-                  return (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() => {
-                        setPrimaryDomain(d.id);
-                        setDomainOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-3 rounded-lg transition-all flex flex-col gap-1 cursor-pointer ${
-                        isSelected
-                          ? "bg-white/15 text-white border border-white/25"
-                          : "bg-[#0c0d12] text-slate-200 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-slate-500"}`} />
-                          <span className="text-xs font-bold text-white">{d.title}</span>
-                        </div>
-                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-                          {d.id}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 leading-normal pl-3.5">
-                        {d.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
           <div>
             <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
@@ -169,7 +118,7 @@ export default function RegistrationModal({ onClose, onSuccess }) {
               placeholder="https://myportfolio.com or Drive link"
               value={portfolioUrl}
               onChange={(e) => setPortfolioUrl(e.target.value)}
-              className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40 transition-all"
+              className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all"
             />
           </div>
 
@@ -183,7 +132,7 @@ export default function RegistrationModal({ onClose, onSuccess }) {
                 placeholder="https://github.com/username"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
-                className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40 transition-all"
+                className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all"
               />
             </div>
 
@@ -196,30 +145,39 @@ export default function RegistrationModal({ onClose, onSuccess }) {
                 placeholder="https://linkedin.com/in/username"
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
-                className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40 transition-all"
+                className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
-              Primary Skills
+              Primary Technical Skills
             </label>
             <input
               type="text"
               placeholder="e.g. React, Node.js, Figma, AI Pipelines"
               value={skills}
               onChange={(e) => setSkills(e.target.value)}
-              className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40 transition-all"
+              className="w-full bg-black/70 border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={regSubmitting}
-            className="mt-3 w-full py-4 bg-white hover:bg-slate-100 text-black text-xs font-black uppercase tracking-widest rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_45px_rgba(255,255,255,0.5)] transition-all cursor-pointer disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+            className="mt-3 w-full py-3.5 bg-white hover:bg-slate-100 text-black text-xs font-black uppercase tracking-widest rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all cursor-pointer disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
           >
-            {regSubmitting ? "Submitting Candidate Profile..." : "Complete Ascend Registration ↗"}
+            <span>
+              {regSubmitting
+                ? "Saving Candidate Profile..."
+                : isEditing
+                ? "Update Candidate Profile"
+                : "Complete Ascend Registration"}
+            </span>
+            <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
           </button>
         </form>
       </div>
