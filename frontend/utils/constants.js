@@ -110,7 +110,15 @@ export const KERALA_COLLEGES = [
   return a.localeCompare(b);
 });
 
-export const ELIMINATED_TEAMS = ["Croatia", "Netherlands", "Uruguay", "Belgium"];
+export const ELIMINATED_TEAMS = [
+  "Croatia",
+  "Netherlands",
+  "Uruguay",
+  "Belgium",
+  "Spain",
+  "England",
+  "France",
+];
 
 export const TEAM_FLAGS = {
   Brazil: "br",

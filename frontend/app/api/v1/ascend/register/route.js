@@ -43,7 +43,6 @@ export async function GET(request) {
     );
 
     if (!res.ok) {
-      // Table may not exist yet or empty query
       return NextResponse.json({ success: true, registered: false, registration: null });
     }
 
@@ -81,14 +80,6 @@ export async function POST(request) {
       linkedin_url = "",
       skills = "",
     } = body;
-
-    const validDomains = ["Coder", "Creative", "Management", "Maker"];
-    if (!validDomains.includes(primary_domain)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid primary domain selected." },
-        { status: 400 }
-      );
-    }
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;
@@ -140,6 +131,87 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("POST ascend/register error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const player = getPlayerFromReq(request);
+    if (!player || !player.user_id) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      seeking_internship = true,
+      portfolio_url = "",
+      github_url = "",
+      linkedin_url = "",
+      skills = "",
+    } = body;
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { success: false, error: "Database not configured" },
+        { status: 503 }
+      );
+    }
+
+    const headers = {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    };
+
+    const payload = {
+      seeking_internship: Boolean(seeking_internship),
+      portfolio_url,
+      github_url,
+      linkedin_url,
+      skills,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.primary_domain) {
+      payload.primary_domain = body.primary_domain;
+    }
+
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/ascend_registrations?user_id=eq.${encodeURIComponent(player.user_id)}`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Supabase ascend_registrations update error:", errText);
+      return NextResponse.json(
+        { success: false, error: "Failed to update profile" },
+        { status: 500 }
+      );
+    }
+
+    const saved = await res.json();
+    return NextResponse.json({
+      success: true,
+      message: "Candidate profile updated successfully!",
+      registration: saved[0] || payload,
+    });
+  } catch (error) {
+    console.error("PUT ascend/register error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

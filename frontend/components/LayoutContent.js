@@ -93,8 +93,11 @@ function LayoutInner({
   return (
     <>
       <Navbar />
-      <main className="flex-1 flex flex-col w-full relative">{children}</main>
+      <main className="flex-1 flex flex-col w-full relative pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+        {children}
+      </main>
       <Footer />
+      <MobileBottomNav pathname={pathname} player={player} />
     </>
   );
 }
@@ -163,112 +166,6 @@ function ArenaLayout({
       </div>
     );
   }
-
-  const mobileTabs = [
-    {
-      name: "Overview",
-      href: "/dashboard",
-      icon: (
-        <svg
-          className="w-5.5 h-5.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "Challenges",
-      href: "/tasks",
-      icon: (
-        <svg
-          className="w-5.5 h-5.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "Ascend",
-      href: "/ascend",
-      isCenter: true,
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4.5 15.75l7.5-7.5 7.5 7.5"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4.5 9.75l7.5-7.5 7.5 7.5"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "μPredict",
-      href: "/match",
-      icon: (
-        <svg
-          className="w-5.5 h-5.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
-          />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20" />
-        </svg>
-      ),
-    },
-    {
-      name: "Leaderboard",
-      href: "/leaderboard",
-      icon: (
-        <svg
-          className="w-5.5 h-5.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      ),
-    },
-  ];
 
   // Render the dashboard shell wrapper with sidebar navigation and main panels.
   return (
@@ -365,51 +262,7 @@ function ArenaLayout({
         <Footer />
       </div>
 
-      {/* Tabbed mobile bottom shortcuts menu. */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom,0px))] bg-[#0c0a18]/90 border-t border-white/5 flex items-center justify-around z-40 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
-        {mobileTabs.map((item) => {
-          const isActive =
-            item.name === "Profile"
-              ? pathname.startsWith("/profile")
-              : pathname === item.href;
-
-          if (item.isCenter) {
-            return (
-              <Link
-                key={item.name}
-                id={`mobile-tab-item-${item.name.toLowerCase()}`}
-                href={item.href}
-                className="flex-1 min-w-0 flex flex-col items-center justify-center -mt-5 transition-all group"
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl ${
-                    isActive
-                      ? "bg-gradient-to-tr from-violet-600 to-cyan-500 text-white shadow-violet-500/50 scale-110 ring-2 ring-violet-400"
-                      : "bg-gradient-to-tr from-violet-600/90 to-indigo-600/90 text-white hover:scale-105 shadow-indigo-500/30 border border-white/20"
-                  }`}
-                >
-                  {item.icon}
-                </div>
-              </Link>
-            );
-          }
-
-          return (
-            <Link
-              key={item.name}
-              id={`mobile-tab-item-${item.name.toLowerCase().replace("μ", "u")}`}
-              href={item.href}
-              className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all ${
-                isActive
-                  ? "text-violet-400"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              {item.icon}
-            </Link>
-          );
-        })}
-      </nav>
+      <MobileBottomNav pathname={pathname} player={player} />
 
       {showOnboarding && (
         <OnboardingModal
@@ -421,5 +274,183 @@ function ArenaLayout({
         />
       )}
     </div>
+  );
+}
+
+function MobileBottomNav({ pathname, player }) {
+  if (
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/development" ||
+    pathname.startsWith("/admin")
+  ) {
+    return null;
+  }
+
+  const mobileTabs = [
+    {
+      name: "Home",
+      href: player ? "/dashboard" : "/",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Challenges",
+      href: "/tasks",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Ascend",
+      href: "/ascend",
+      isCenter: true,
+      icon: (
+        <svg
+          className="w-5.5 h-5.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 15.75l7.5-7.5 7.5 7.5"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 9.75l7.5-7.5 7.5 7.5"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "μPredict",
+      href: "/match",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
+          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20" />
+        </svg>
+      ),
+    },
+    {
+      name: "Leaderboard",
+      href: "/leaderboard",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[calc(4.25rem+env(safe-area-inset-bottom,0px))] bg-[#0c0a18]/95 border-t border-white/10 flex items-center justify-around z-40 backdrop-blur-xl px-1 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      {mobileTabs.map((item) => {
+        const isActive =
+          item.name === "Home"
+            ? pathname === "/dashboard" || pathname === "/"
+            : item.name === "Profile"
+              ? pathname.startsWith("/profile")
+              : pathname.startsWith(item.href);
+
+        if (item.isCenter) {
+          return (
+            <Link
+              key={item.name}
+              id={`mobile-tab-item-${item.name.toLowerCase()}`}
+              href={item.href}
+              className="flex-1 min-w-0 flex flex-col items-center justify-center -mt-4 transition-all group"
+            >
+              <div
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl ${
+                  isActive
+                    ? "bg-gradient-to-tr from-violet-600 to-cyan-500 text-white shadow-violet-500/50 scale-105 ring-2 ring-violet-400"
+                    : "bg-gradient-to-tr from-violet-600/90 to-indigo-600/90 text-white hover:scale-105 shadow-indigo-500/30 border border-white/20"
+                }`}
+              >
+                {item.icon}
+              </div>
+              <span
+                className={`text-[10px] font-bold tracking-tight mt-0.5 transition-colors ${
+                  isActive
+                    ? "text-violet-300"
+                    : "text-slate-400 group-hover:text-white"
+                }`}
+              >
+                {item.name}
+              </span>
+            </Link>
+          );
+        }
+
+        return (
+          <Link
+            key={item.name}
+            id={`mobile-tab-item-${item.name.toLowerCase().replace("μ", "u")}`}
+            href={item.href}
+            className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all ${
+              isActive
+                ? "text-violet-400 font-semibold"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            {item.icon}
+            <span className="text-[10px] font-medium tracking-tight mt-0.5 truncate max-w-full">
+              {item.name}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
