@@ -182,9 +182,7 @@ export async function PUT(request) {
       updated_at: new Date().toISOString(),
     };
 
-    if (body.primary_domain) {
-      payload.primary_domain = body.primary_domain;
-    }
+    // Note: primary_domain is intentionally omitted from PUT updates to lock the domain after initial registration.
 
     const res = await fetch(
       `${supabaseUrl}/rest/v1/ascend_registrations?user_id=eq.${encodeURIComponent(player.user_id)}`,

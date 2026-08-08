@@ -28,6 +28,19 @@ export default function AdminAscendPage() {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [deletingTask, setDeletingTask] = useState(false);
 
+  // Edit Task State
+  const [editingTask, setEditingTask] = useState(null);
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [editCompanyLogo, setEditCompanyLogo] = useState("");
+  const [editDomain, setEditDomain] = useState("Coder");
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editRequirements, setEditRequirements] = useState("");
+  const [editPerks, setEditPerks] = useState("");
+  const [editDeadline, setEditDeadline] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editMsg, setEditMsg] = useState({ type: "", text: "" });
+
   // Submissions state
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
@@ -230,6 +243,62 @@ export default function AdminAscendPage() {
       alert("Error deleting task.");
     } finally {
       setDeletingTask(false);
+    }
+  };
+
+  const handleOpenEditModal = (task) => {
+    setEditingTask(task);
+    setEditCompanyName(task.company_name || "");
+    setEditCompanyLogo(task.company_logo || "");
+    setEditDomain(task.domain || "Coder");
+    setEditTitle(task.title || "");
+    setEditDescription(task.description || "");
+    setEditRequirements(task.requirements || "");
+    setEditPerks(task.perks || "");
+    setEditDeadline(
+      task.deadline ? new Date(task.deadline).toISOString().split("T")[0] : ""
+    );
+    setEditMsg({ type: "", text: "" });
+  };
+
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    setEditSubmitting(true);
+    setEditMsg({ type: "", text: "" });
+
+    try {
+      const res = await fetch("/api/v1/admin/ascend/tasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTask.id,
+          company_name: editCompanyName,
+          company_logo: editCompanyLogo,
+          domain: editDomain,
+          title: editTitle,
+          description: editDescription,
+          requirements: editRequirements,
+          perks: editPerks,
+          deadline: editDeadline || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setEditMsg({ type: "success", text: "Company task updated successfully!" });
+        setTimeout(() => {
+          setEditingTask(null);
+          fetchTasks();
+        }, 600);
+      } else {
+        setEditMsg({ type: "error", text: data.error || "Failed to update task." });
+      }
+    } catch (err) {
+      console.error("Update task error:", err);
+      setEditMsg({ type: "error", text: "Network request failed." });
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -719,6 +788,16 @@ export default function AdminAscendPage() {
                         </span>
                         <button
                           type="button"
+                          onClick={() => handleOpenEditModal(t)}
+                          className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all cursor-pointer"
+                          title="Edit Task"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setTaskToDelete(t)}
                           className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all cursor-pointer"
                           title="Delete Task"
@@ -1058,6 +1137,157 @@ export default function AdminAscendPage() {
                 {deletingTask ? "Deleting..." : "Delete Task"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT TASK MODAL */}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-xl w-full shadow-2xl relative animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+              <h3 className="text-base font-extrabold text-slate-900">
+                Edit Company Bounty Task
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingTask(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {editMsg.text && (
+              <div
+                className={`p-3 rounded-xl text-xs mb-4 font-bold ${
+                  editMsg.type === "success"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-rose-50 text-rose-700 border border-rose-200"
+                }`}
+              >
+                {editMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateTask} className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Acme Tech"
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Company Logo URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://logo.clearbit.com/google.com"
+                    value={editCompanyLogo}
+                    onChange={(e) => setEditCompanyLogo(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Domain *</label>
+                  <select
+                    value={editDomain}
+                    onChange={(e) => setEditDomain(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                  >
+                    {DOMAINS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Task / Bounty Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Build an AI-Powered Realtime Dashboard"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Description *</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Detailed explanation of the challenge..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Requirements</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Next.js, Tailwind, Deployed App link"
+                    value={editRequirements}
+                    onChange={(e) => setEditRequirements(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Internship Perks / Offer</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ₹25,000/mo Stipend + Fast-track Interview"
+                    value={editPerks}
+                    onChange={(e) => setEditPerks(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Submission Deadline</label>
+                <input
+                  type="date"
+                  value={editDeadline}
+                  onChange={(e) => setEditDeadline(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTask(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  {editSubmitting ? "Updating Task..." : "Save Task Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

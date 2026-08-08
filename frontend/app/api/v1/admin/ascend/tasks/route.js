@@ -193,3 +193,92 @@ export async function DELETE(request) {
     );
   }
 }
+
+export async function PUT(request) {
+  try {
+    const auth = requireRole(request, "superadmin", "admin", "iglead");
+    if (auth.error) {
+      return NextResponse.json(
+        { success: false, error: auth.message },
+        { status: auth.status }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      company_name,
+      company_logo = "",
+      domain = "Coder",
+      title,
+      description,
+      requirements = "",
+      perks = "",
+      deadline = null,
+      is_active = true,
+    } = body;
+
+    if (!id || !company_name || !title || !description) {
+      return NextResponse.json(
+        { success: false, error: "Task ID, company name, title, and description are required." },
+        { status: 400 }
+      );
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { success: false, error: "Database not configured" },
+        { status: 503 }
+      );
+    }
+
+    const headers = {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    };
+
+    const payload = {
+      company_name,
+      company_logo,
+      domain,
+      title,
+      description,
+      requirements,
+      perks,
+      deadline: deadline ? new Date(deadline).toISOString() : null,
+      is_active: Boolean(is_active),
+    };
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/ascend_tasks?id=eq.${id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Update ascend_tasks error:", errText);
+      return NextResponse.json(
+        { success: false, error: "Failed to update company task" },
+        { status: 500 }
+      );
+    }
+
+    const updated = await res.json();
+    return NextResponse.json({
+      success: true,
+      message: "Company task updated successfully!",
+      task: updated[0] || payload,
+    });
+  } catch (error) {
+    console.error("Admin PUT ascend/tasks error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

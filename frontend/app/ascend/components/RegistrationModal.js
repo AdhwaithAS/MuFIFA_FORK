@@ -58,15 +58,17 @@ export default function RegistrationModal({ existingRegistration, onClose, onSuc
   const domainStyles = {
     Coder: "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:border-cyan-400",
     Creative: "bg-pink-500/10 border-pink-500/30 text-pink-300 hover:border-pink-400",
+    Management: "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:border-amber-400",
     Maker: "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 hover:border-indigo-400",
-    Strategist: "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:border-amber-400",
+    Strategist: "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:border-emerald-400",
   };
 
   const selectedDomainStyles = {
     Coder: "bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.3)]",
     Creative: "bg-pink-500/25 border-pink-400 text-pink-200 shadow-[0_0_20px_rgba(236,72,153,0.3)]",
+    Management: "bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)]",
     Maker: "bg-indigo-500/25 border-indigo-400 text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.3)]",
-    Strategist: "bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)]",
+    Strategist: "bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.3)]",
   };
 
   return (
@@ -108,6 +110,40 @@ export default function RegistrationModal({ existingRegistration, onClose, onSuc
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* Primary Domain Section (Only during new registration) */}
+          {!isEditing && (
+            <div>
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
+                Select Primary Ascend Domain *
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                {["Coder", "Creative", "Management", "Maker"].map((dom) => {
+                  const isSelected = primaryDomain === dom;
+                  return (
+                    <button
+                      key={dom}
+                      type="button"
+                      onClick={() => setPrimaryDomain(dom)}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                        isSelected
+                          ? selectedDomainStyles[dom] || "bg-violet-500/25 border-violet-400 text-violet-200 shadow-md"
+                          : domainStyles[dom] || "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      <span>{dom}</span>
+                      {isSelected && (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
