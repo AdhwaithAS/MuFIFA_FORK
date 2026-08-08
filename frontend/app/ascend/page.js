@@ -242,7 +242,10 @@ export default function AscendPage() {
     async function fetchData() {
       setLoadingTasks(true);
       try {
-        const tasksRes = await fetch("/api/v1/ascend/tasks");
+        const domainQuery = registered && userRegistration?.primary_domain
+          ? `?domain=${encodeURIComponent(userRegistration.primary_domain)}`
+          : "";
+        const tasksRes = await fetch(`/api/v1/ascend/tasks${domainQuery}`);
         const tasksData = await tasksRes.json();
         if (tasksData.success && tasksData.tasks) {
           setTasks(tasksData.tasks);
@@ -264,7 +267,7 @@ export default function AscendPage() {
     }
 
     fetchData();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, registered, userRegistration]);
 
   const refreshSubmissions = async () => {
     try {
@@ -335,6 +338,11 @@ export default function AscendPage() {
       </main>
     );
   }
+
+  const displayedTasks = tasks.filter((task) => {
+    if (!registered || !userRegistration?.primary_domain) return true;
+    return task.domain === userRegistration.primary_domain;
+  });
 
   return (
     <main className="min-h-screen bg-[#07070a] text-slate-100 font-sans selection:bg-violet-500 selection:text-white relative overflow-x-hidden pb-24">
@@ -497,7 +505,7 @@ export default function AscendPage() {
                 activeTab === "tasks" ? "text-white" : "text-slate-400 hover:text-white"
               }`}
             >
-              <span>AVAILABLE TASKS ({tasks.length})</span>
+              <span>AVAILABLE TASKS ({displayedTasks.length})</span>
               {activeTab === "tasks" && (
                 <div className="absolute bottom-0 inset-x-0 h-0.5 bg-white rounded-full transition-all duration-300" />
               )}
@@ -526,47 +534,49 @@ export default function AscendPage() {
           {/* Left Column: Tasks Grid (2 Cols wide on desktop) */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             {activeTab === "tasks" && (
-              loadingTasks ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
-                  <span className="text-xs text-slate-400 font-mono uppercase tracking-widest">
-                    Loading Ascend Bounties...
-                  </span>
-                </div>
-              ) : tasks.length === 0 ? (
-                <div className="py-20 text-center bg-[#0c0c12] border border-white/10 rounded-3xl p-8 flex flex-col items-center gap-3 shadow-xl">
-                  <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-300 mb-1">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+              <>
+                {loadingTasks ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
+                    <span className="text-xs text-slate-400 font-mono uppercase tracking-widest">
+                      Loading Ascend Bounties...
+                    </span>
                   </div>
-                  <p className="text-white font-extrabold text-base">
-                    No Active Bounties Available
-                  </p>
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold mt-1">
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Initial qualification will be out at 1pm.</span>
+                ) : displayedTasks.length === 0 ? (
+                  <div className="py-20 text-center bg-[#0c0c12] border border-white/10 rounded-3xl p-8 flex flex-col items-center gap-3 shadow-xl">
+                    <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-300 mb-1">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-white font-extrabold text-base">
+                      No Active Bounties Available for {userRegistration?.primary_domain || "your domain"}
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold mt-1">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Initial qualification will be out at 1pm.</span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-6">
-                  {tasks.map((task) => {
-                    const isSubmitted = submissions.some(
-                      (s) => Number(s.task_id) === Number(task.id)
-                    );
-                    return (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        submitted={isSubmitted}
-                        onSelectTask={(t) => setSelectedTaskForSubmission(t)}
-                      />
-                    );
-                  })}
-                </div>
-              )
+                ) : (
+                  <div className="flex flex-col gap-6">
+                    {displayedTasks.map((task) => {
+                      const isSubmitted = submissions.some(
+                        (s) => Number(s.task_id) === Number(task.id)
+                      );
+                      return (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          submitted={isSubmitted}
+                          onSelectTask={(t) => setSelectedTaskForSubmission(t)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             {activeTab === "submissions" && (
