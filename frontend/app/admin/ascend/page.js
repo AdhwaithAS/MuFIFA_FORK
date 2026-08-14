@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { THEME } from "../layout";
+import { isPastDeadline } from "@/utils/ascendDeadline";
 
 const DOMAINS = ["Coder", "Creative", "Management", "Maker"];
 
@@ -655,16 +656,10 @@ export default function AdminAscendPage() {
                     const taskTitle = sub.ascend_tasks?.title || `Task #${sub.task_id}`;
                     const taskDomain = sub.ascend_tasks?.domain || "Coder";
 
-                    const rawDeadline = sub.ascend_tasks?.deadline || "2026-08-12T23:59:59Z";
-                    let deadlineDate = new Date(rawDeadline);
-                    if (
-                      typeof rawDeadline === "string" &&
-                      (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-                    ) {
-                      deadlineDate.setUTCHours(23, 59, 59, 999);
-                    }
                     const submittedDate = sub.submitted_at ? new Date(sub.submitted_at) : null;
-                    const isLate = submittedDate ? submittedDate > deadlineDate : false;
+                    const isLate = submittedDate
+                      ? isPastDeadline(sub.submitted_at, sub.ascend_tasks?.deadline)
+                      : false;
                     const formattedTime = submittedDate
                       ? submittedDate.toLocaleString("en-US", {
                           month: "short",
@@ -1021,15 +1016,10 @@ export default function AdminAscendPage() {
                   {selectedSubmission.registrations?.name || selectedSubmission.user_id}
                 </div>
                 {selectedSubmission.submitted_at && (() => {
-                  const rawDeadline = selectedSubmission.ascend_tasks?.deadline || "2026-08-12T23:59:59Z";
-                  let deadlineDate = new Date(rawDeadline);
-                  if (
-                    typeof rawDeadline === "string" &&
-                    (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-                  ) {
-                    deadlineDate.setUTCHours(23, 59, 59, 999);
-                  }
-                  const isModalSubLate = new Date(selectedSubmission.submitted_at) > deadlineDate;
+                  const isModalSubLate = isPastDeadline(
+                    selectedSubmission.submitted_at,
+                    selectedSubmission.ascend_tasks?.deadline
+                  );
                   return (
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${

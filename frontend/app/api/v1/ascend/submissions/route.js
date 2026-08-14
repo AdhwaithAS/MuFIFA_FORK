@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/utils/auth";
+import { isPastDeadline } from "@/utils/ascendDeadline";
 
 const PLAYER_COOKIE = "player_token";
 
@@ -99,26 +100,30 @@ export async function POST(request) {
       `${supabaseUrl}/rest/v1/ascend_tasks?id=eq.${encodeURIComponent(task_id)}&select=*`,
       { method: "GET", headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
     );
-    if (taskFetchRes.ok) {
-      const taskArr = await taskFetchRes.json();
-      if (taskArr && taskArr.length > 0) {
-        const taskObj = taskArr[0];
-        const rawDeadline = taskObj.deadline || "2026-08-12T23:59:59Z";
-        let deadlineDate = new Date(rawDeadline);
-        // If deadline is date-only or starts at 00:00, allow until end of day (23:59:59)
-        if (typeof rawDeadline === "string" && (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))) {
-          deadlineDate.setUTCHours(23, 59, 59, 999);
-        }
-        if (new Date() > deadlineDate) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Your task wasn't uploaded as it's submitted after the deadline",
-            },
-            { status: 400 }
-          );
-        }
-      }
+    if (!taskFetchRes.ok) {
+      return NextResponse.json(
+        { success: false, error: "Failed to verify task deadline details" },
+        { status: 500 }
+      );
+    }
+
+    const taskArr = await taskFetchRes.json();
+    if (!taskArr || taskArr.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Task not found." },
+        { status: 404 }
+      );
+    }
+
+    const taskObj = taskArr[0];
+    if (isPastDeadline(new Date(), taskObj.deadline)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Your task wasn't uploaded as it's submitted after the deadline",
+        },
+        { status: 400 }
+      );
     }
 
     const payload = {

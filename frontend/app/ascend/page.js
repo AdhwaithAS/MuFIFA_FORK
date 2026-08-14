@@ -8,6 +8,8 @@ import SubmissionCard from "./components/SubmissionCard";
 import RegistrationModal from "./components/RegistrationModal";
 
 
+import { isPastDeadline } from "@/utils/ascendDeadline";
+
 // Circular Spotlight Lens Rocket Loader & Reveal Animation
 function RocketCurtainRaiser({ onComplete }) {
   const [active, setActive] = useState(true);
@@ -360,52 +362,29 @@ export default function AscendPage() {
     return isInitialQualificationTask(taskForSub);
   });
 
-  // Calculate if initial task was submitted after deadline (Aug 12, 2026 cutoff)
+  const initialTaskObj = tasks.find(isInitialQualificationTask);
+  const initialTaskExists = Boolean(initialTaskObj);
+
+  // Calculate if initial task was submitted after deadline
   const isSubmittedAfterDeadline = (() => {
     if (!initialTaskSubmission || !initialTaskSubmission.submitted_at) return false;
-    const submittedDate = new Date(initialTaskSubmission.submitted_at);
     const relatedTask =
       initialTaskSubmission.ascend_tasks ||
       tasks.find((t) => Number(t.id) === Number(initialTaskSubmission.task_id));
-
-    const rawDeadline = relatedTask?.deadline || "2026-08-12T23:59:59Z";
-    let deadlineDate = new Date(rawDeadline);
-    if (
-      typeof rawDeadline === "string" &&
-      (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-    ) {
-      deadlineDate.setUTCHours(23, 59, 59, 999);
-    }
-    return submittedDate > deadlineDate;
+    return isPastDeadline(initialTaskSubmission.submitted_at, relatedTask?.deadline);
   })();
 
-  const isInitialDeadlinePassed = (() => {
-    const initialTask = tasks.find(isInitialQualificationTask);
-    const rawDeadline = initialTask?.deadline || "2026-08-12T23:59:59Z";
-    let deadlineDate = new Date(rawDeadline);
-    if (
-      typeof rawDeadline === "string" &&
-      (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-    ) {
-      deadlineDate.setUTCHours(23, 59, 59, 999);
-    }
-    return new Date() > deadlineDate;
-  })();
+  // Initial qualification deadline gating ONLY applies if an initial task actually exists
+  const isInitialDeadlinePassed = initialTaskExists
+    ? isPastDeadline(new Date(), initialTaskObj.deadline)
+    : false;
 
   const isSubmissionLate = (sub) => {
     if (!sub || !sub.submitted_at) return false;
     const taskObj =
       sub.ascend_tasks ||
       tasks.find((t) => Number(t.id) === Number(sub.task_id));
-    const rawDeadline = taskObj?.deadline || "2026-08-12T23:59:59Z";
-    let deadlineDate = new Date(rawDeadline);
-    if (
-      typeof rawDeadline === "string" &&
-      (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-    ) {
-      deadlineDate.setUTCHours(23, 59, 59, 999);
-    }
-    return new Date(sub.submitted_at) > deadlineDate;
+    return isPastDeadline(sub.submitted_at, taskObj?.deadline);
   };
 
   const validSubmissions = submissions.filter((sub) => !isSubmissionLate(sub));

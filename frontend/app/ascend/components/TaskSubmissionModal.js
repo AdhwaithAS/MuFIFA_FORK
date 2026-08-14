@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { isPastDeadline as checkPastDeadline } from "@/utils/ascendDeadline";
 
 export default function TaskSubmissionModal({ selectedTask, onClose, onSuccess }) {
   const [submissionUrl, setSubmissionUrl] = useState("");
@@ -7,12 +8,7 @@ export default function TaskSubmissionModal({ selectedTask, onClose, onSuccess }
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
-  const rawDeadline = selectedTask?.deadline || "2026-08-12T23:59:59Z";
-  let deadlineDate = new Date(rawDeadline);
-  if (typeof rawDeadline === "string" && (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))) {
-    deadlineDate.setUTCHours(23, 59, 59, 999);
-  }
-  const isPastDeadline = new Date() > deadlineDate;
+  const isPastDeadline = checkPastDeadline(new Date(), selectedTask?.deadline);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

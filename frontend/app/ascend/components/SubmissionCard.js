@@ -1,4 +1,5 @@
 import React from "react";
+import { isPastDeadline } from "@/utils/ascendDeadline";
 
 export default function SubmissionCard({ submission }) {
   const company = submission.ascend_tasks?.company_name || "Company Partner";
@@ -61,15 +62,7 @@ export default function SubmissionCard({ submission }) {
         )}
 
         {submission.submitted_at && (() => {
-          const rawDeadline = submission.ascend_tasks?.deadline || "2026-08-12T23:59:59Z";
-          let deadlineDate = new Date(rawDeadline);
-          if (
-            typeof rawDeadline === "string" &&
-            (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))
-          ) {
-            deadlineDate.setUTCHours(23, 59, 59, 999);
-          }
-          const isLateSub = new Date(submission.submitted_at) > deadlineDate;
+          const isLateSub = isPastDeadline(submission.submitted_at, submission.ascend_tasks?.deadline);
           const formattedDate = new Date(submission.submitted_at).toLocaleString("en-US", {
             month: "short",
             day: "numeric",
