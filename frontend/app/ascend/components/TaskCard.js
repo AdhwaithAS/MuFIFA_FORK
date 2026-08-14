@@ -102,7 +102,7 @@ export default function TaskCard({ task, submitted, onSelectTask }) {
                   day: "numeric",
                   year: "numeric",
                 })}`
-              : "Deadline: Aug 18, 2026"}
+              : "Deadline: Aug 12, 2026"}
           </span>
         </div>
 

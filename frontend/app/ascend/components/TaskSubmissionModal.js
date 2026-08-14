@@ -7,9 +7,21 @@ export default function TaskSubmissionModal({ selectedTask, onClose, onSuccess }
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
+  const rawDeadline = selectedTask?.deadline || "2026-08-12T23:59:59Z";
+  let deadlineDate = new Date(rawDeadline);
+  if (typeof rawDeadline === "string" && (rawDeadline.endsWith("T00:00:00+00:00") || rawDeadline.endsWith("T00:00:00Z"))) {
+    deadlineDate.setUTCHours(23, 59, 59, 999);
+  }
+  const isPastDeadline = new Date() > deadlineDate;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedTask) return;
+
+    if (isPastDeadline) {
+      setSubmitError("Your task wasn't uploaded as it's submitted after the deadline");
+      return;
+    }
 
     setSubmittingTask(true);
     setSubmitError("");
@@ -36,7 +48,7 @@ export default function TaskSubmissionModal({ selectedTask, onClose, onSuccess }
           onClose();
         }, 1500);
       } else {
-        setSubmitError(data.error || "Failed to submit solution.");
+        setSubmitError(data.error || "Your task wasn't uploaded as it's submitted after the deadline");
       }
     } catch (err) {
       setSubmitError("Network error submitting solution.");
